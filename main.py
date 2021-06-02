@@ -1,5 +1,5 @@
 __author__ = "Blake H. Stephenson"
-__version__ = "0.0.1"
+__version__ = "0.0.2"
 
 from stocks import StockBank
 import urllib3
@@ -50,7 +50,7 @@ def button_decode(argument):
 
 keyInput = 0
 while keyInput != 1:
-    keyInput = button_decode(input(stockList.get() + " q(next)/w(add)/e(exit)"))
+    keyInput = button_decode(input(stockList.get() + " q(add)/w(next)/e(exit)"))
 
 #array of prices to be used
 prices = []
@@ -58,28 +58,31 @@ prices = []
 # ****************************************
 # scraping binance for requested data
 # ****************************************
-for i in userList.get_bank():
-    # All of the page URLs follow the same format with the exception of the ticker before "_USDT" is changed
-    url = f'https://www.binance.com/en/trade/{i}_USDT?layout=pro&type=spot'
 
-    # getting the html code from specified website
-    req = urllib3.PoolManager()
-    res = req.request('GET', url)
-    soup = BeautifulSoup(res.data, 'html.parser')
+while True:
+    for i in userList.get_bank():
+        # All of the page URLs follow the same format with the exception of the ticker before "_USDT" is changed
+        url = f'https://www.binance.com/en/trade/{i}_USDT?layout=pro&type=spot'
 
-    title = (soup.title.getText())
-    prices.append(title.split(" | ")[0])
+        # getting the html code from specified website
+        req = urllib3.PoolManager()
+        res = req.request('GET', url)
+        soup = BeautifulSoup(res.data, 'html.parser')
 
-# Combine both lists into a dictionary
-res = dict(zip(userList.get_bank(), prices))
+        title = (soup.title.getText())
+        prices.append(title.split(" | ")[0])
 
-# Create an Excel Document with the dictionary
-with open("data.txt", 'w', newline='') as file:
-    headers = ("Currency", 'Price (in USDT)')
-    csv_writer = DictWriter(file, fieldnames=headers)
-    csv_writer.writeheader()
-    for k, v in res.items():
-        csv_writer.writerow({
-            'Currency': k,
-            'Price (in USDT)': v
-        })
+    # Combine both lists into a dictionary
+    res = dict(zip(userList.get_bank(), prices))
+
+    # Create an Excel Document with the dictionary
+    with open("data.txt", 'w', newline='') as file:
+        headers = ("Currency", 'Price (in USDT)')
+        csv_writer = DictWriter(file, fieldnames=headers)
+        csv_writer.writeheader()
+        for k, v in res.items():
+            csv_writer.writerow({
+                'Currency': k,
+                'Price (in USDT)': v
+            })
+    prices = []
