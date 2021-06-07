@@ -1,5 +1,5 @@
 __author__ = "Blake H. Stephenson"
-__version__ = "0.0.2"
+__version__ = "0.0.3"
 
 from stocks import StockBank
 import urllib3
@@ -18,26 +18,28 @@ print("q to add current currency, w to show next currency, e the finish")
 # index of the currencies
 
 
+cryptoList = StockBank()
+cryptoList.add_file("cryptos.txt")
 stockList = StockBank()
-stockList.add_file("stocks.txt")
+
 userList = StockBank()
 
-
+#functions for crypto inputs
 def Q():
-    userList.add_stock(stockList.get())
-    stockList.next()
+    userList.add_stock(cryptoList.get())
+    cryptoList.next()
     return 0
 
 
 def W():
-    stockList.next()
+    cryptoList.next()
     return 0
 
 
 def E():
     return 1
 
-
+#switch for crypto selection
 def button_decode(argument):
     switcher = {
         "q": Q,
@@ -47,18 +49,42 @@ def button_decode(argument):
     func = switcher.get(argument, lambda: "Invalid Input")
     return func()
 
+#functions for stock inputs
+def Qs():
+    userList.add_stock(stockList.get())
+    stockList.next()
+    return 0
+
+
+def Ws():
+    stockList.next()
+    return 0
+
+
+def Es():
+    return 1
+
+
+def button_decode_stock(argument):
+    #same as other switch but for stocks
+    switcher = {
+        "q": Qs,
+        "w": Ws,
+        "e": Es
+    }
+    func = switcher.get(argument, lambda: "Invalid Input")
+    return func()
 
 keyInput = 0
 while keyInput != 1:
-    keyInput = button_decode(input(stockList.get() + " q(add)/w(next)/e(exit)"))
-
-#array of prices to be used
-prices = []
+    keyInput = button_decode(input(cryptoList.get() + " q(add)/w(next)/e(exit)"))
 
 # ****************************************
 # scraping binance for requested data
 # ****************************************
 
+#array of prices to be used
+prices = []
 while True:
     for i in userList.get_bank():
         # All of the page URLs follow the same format with the exception of the ticker before "_USDT" is changed
