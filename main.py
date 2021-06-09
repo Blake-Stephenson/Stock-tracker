@@ -1,11 +1,10 @@
 __author__ = "Blake H. Stephenson"
-__version__ = "0.0.3"
+__version__ = "0.0.4"
 
 from stocks import StockBank
 import urllib3
 from bs4 import BeautifulSoup
-from csv import DictReader, DictWriter
-
+import time
 
 
 # ****************************************
@@ -21,12 +20,14 @@ print("q to add current currency, w to show next currency, e the finish")
 cryptoList = StockBank()
 cryptoList.add_file("cryptos.txt")
 stockList = StockBank()
+stockList.add_file("stocks.txt")
 
-userList = StockBank()
+userList_c = StockBank()
+userList_s = StockBank()
 
 #functions for crypto inputs
 def Q():
-    userList.add_stock(cryptoList.get())
+    userList_c.add_stock(cryptoList.get())
     cryptoList.next()
     return 0
 
@@ -51,7 +52,7 @@ def button_decode(argument):
 
 #functions for stock inputs
 def Qs():
-    userList.add_stock(stockList.get())
+    userList_s.add_stock(stockList.get())
     stockList.next()
     return 0
 
@@ -75,18 +76,24 @@ def button_decode_stock(argument):
     func = switcher.get(argument, lambda: "Invalid Input")
     return func()
 
+
 keyInput = 0
 while keyInput != 1:
     keyInput = button_decode(input(cryptoList.get() + " q(add)/w(next)/e(exit)"))
+keyInput = 0
+while keyInput != 1:
+    keyInput = button_decode_stock(input(stockList.get() + " q(add)/w(next)/e(exit)"))
+
 
 # ****************************************
 # scraping binance for requested data
 # ****************************************
 
-#array of prices to be used
-prices = []
+
 while True:
-    for i in userList.get_bank():
+    # array of prices to be used
+    prices = []
+    for i in userList_c.get_bank():
         # All of the page URLs follow the same format with the exception of the ticker before "_USDT" is changed
         url = f'https://www.binance.com/en/trade/{i}_USDT?layout=pro&type=spot'
 
@@ -98,17 +105,40 @@ while True:
         title = (soup.title.getText())
         prices.append(title.split(" | ")[0])
 
-    # Combine both lists into a dictionary
-    res = dict(zip(userList.get_bank(), prices))
 
-    # Create an Excel Document with the dictionary
-    with open("data.txt", 'w', newline='') as file:
-        headers = ("Currency", 'Price (in USDT)')
-        csv_writer = DictWriter(file, fieldnames=headers)
-        csv_writer.writeheader()
-        for k, v in res.items():
-            csv_writer.writerow({
-                'Currency': k,
-                'Price (in USDT)': v
-            })
+    # Combine both lists into a dictionary
+    data = dict(zip(userList_c.get_bank(), prices))
+
+    #print crypto data to word file
+    f = open("data.txt", "w")
+
+    f.write("Crypto, Price (in USDT)\n")
+    for i in data:
+        f.write(i+": "+data[i]+"\n")
+    f.close()
+
     prices = []
+    for i in userList_s.get_bank():
+        # All of the page URLs follow the same format with the exception of the ticker at the end to it is changed
+        url = f'https://ca.finance.yahoo.com/quote/{i}?p={i}'
+
+        # getting the html code from specified website
+        req = urllib3.PoolManager()
+        res = req.request('GET', url)
+        soup = BeautifulSoup(res.data, 'html.parser')
+
+        prices.append(soup.find("span",class_ = "Trsdu(0.3s) Fw(b) Fz(36px) Mb(-4px) D(ib)").getText())
+
+    # Combine both lists into a dictionary
+    data = dict(zip(userList_s.get_bank(), prices))
+
+    #print stock data to word file
+    f = open("data.txt", "a")
+    f.write("Stock, Price (in USD)\n")
+    for i in data:
+        f.write(i+": "+data[i]+"\n")
+    f.close()
+
+    print("updated")
+    time.sleep(5)
+
